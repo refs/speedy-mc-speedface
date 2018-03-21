@@ -15,6 +15,10 @@ import (
 // get biggest                                   [ID] and work with the offset
 // insert limits for coupons with ID greater than ^
 
+var (
+	idOffset = 0
+)
+
 func main() {
 	file, err := os.Open("vuclip_codes.csv")
 	if err != nil {
@@ -26,6 +30,9 @@ func main() {
 		log.Fatal(err)
 	}
 	defer conn.Close()
+
+	row := conn.QueryRow("SELECT id FROM coupons c ORDER BY c.id DESC LIMIT 1;")
+	row.Scan(&idOffset)
 
 	txn, err := conn.Begin()
 	if err != nil {
@@ -54,6 +61,21 @@ func main() {
 		}
 	}
 
+	q := `INSERT INTO limit_counters (action, campaignid, couponid, counter, limitval)
+	(
+	  SELECT
+		'redeemCoupon' as action,
+		c.campaignid as campaignid,
+		c.id as couponid,
+		0.0 as counter,
+		1.0 as limitval
+	  FROM
+		coupons as c
+	  WHERE
+		c.id > $1
+	)
+	`
+
 	err = stmt.Close()
 	if err != nil {
 		log.Panic(err)
@@ -62,6 +84,10 @@ func main() {
 	err = txn.Commit()
 	if err != nil {
 		txn.Rollback()
+		log.Panic(err)
+	}
+	_, err = conn.Exec(q, idOffset)
+	if err != nil {
 		log.Panic(err)
 	}
 }
