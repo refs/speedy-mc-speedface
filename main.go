@@ -11,10 +11,6 @@ import (
 	"github.com/lib/pq"
 )
 
-// TODO
-// get biggest                                   [ID] and work with the offset
-// insert limits for coupons with ID greater than ^
-
 var (
 	idOffset = 0
 )
