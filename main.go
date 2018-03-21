@@ -9,50 +9,60 @@ import (
 	"strings"
 	"sync"
 
-	_ "github.com/lib/pq"
+	"github.com/araddon/dateparse"
+	"github.com/lib/pq"
 )
 
 var (
-	file, _    = os.Open("example.csv")
+	file, _    = os.Open("final promocodes.csv")
 	strBuilder strings.Builder
 	wg         sync.WaitGroup
 	queries    string
 	counter    int64
+	id         = 0
 )
 
-func process(row []string, wg *sync.WaitGroup) {
-	strBuilder.WriteString(row[0])
-	wg.Done()
-}
-
 func main() {
-	connStr := "user=talon dbname=talon host=localhost port=5433 password=talon.one.9000 sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
+	conn, err := sql.Open("postgres", "user=alextalon dbname=vuclip host=localhost port=5432 sslmode=disable")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	txn, err := conn.Begin()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	rows, err := db.Query("SELECT COUNT(*) FROM coupons;")
+	stmt, err := txn.Prepare(pq.CopyIn("coupons", "startdate", "value", "expirydate", "campaignid", "accountid", "applicationid"))
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
-	defer rows.Close()
-	for rows.Next() {
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Println("result")
-	}
-
 	r := csv.NewReader(file)
 	for {
 		record, err := r.Read()
 		if err == io.EOF {
 			break
 		}
-		wg.Add(1)
-		go process(record, &wg)
+		startdate, err := dateparse.ParseAny(record[1])
+		value := record[0]
+		expirydate, err := dateparse.ParseAny(record[3])
+		campaignid := record[2]
+		if err != nil {
+			log.Panic(err)
+		}
+		_, err = stmt.Exec(startdate, value, expirydate, campaignid, 1, 4)
+		if err != nil {
+			log.Panic(err)
+		}
 	}
-	wg.Wait()
-
+	err = stmt.Close()
+	if err != nil {
+		log.Panic(err)
+	}
+	err = txn.Commit()
+	if err != nil {
+		txn.Rollback()
+		log.Panic(err)
+	}
 }
