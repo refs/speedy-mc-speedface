@@ -11,11 +11,7 @@ import (
 	"github.com/lib/pq"
 )
 
-var (
-	idOffset = 0
-)
-
-func main() {
+func main_old() {
 	file, err := os.Open("vuclip_codes.csv")
 	if err != nil {
 		log.Panic(err)
