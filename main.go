@@ -1,5 +1,10 @@
 package main
 
+// TODO:
+// - stream the file instead of loading it on memory
+// 		-  https://golang.org/pkg/bytes/#Buffer.Bytes
+// 		-  https://golang.org/pkg/bufio/#Scanner.Buffer
+
 import (
 	"database/sql"
 	"encoding/csv"
@@ -57,7 +62,7 @@ func commitBuffer(buffer [][]string, conn *sql.DB, wg *sync.WaitGroup) {
 
 func main() {
 	var wg sync.WaitGroup
-	file, err := os.Open("vuclip_codes.csv")
+	file, err := os.Open("production.csv")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -73,7 +78,7 @@ func main() {
 	row := conn.QueryRow("SELECT id FROM coupons c ORDER BY c.id DESC LIMIT 1;")
 	row.Scan(&idOffset)
 
-	buffer := make([][]string, 1000)
+	buffer := make([][]string, 0)
 	r := csv.NewReader(file)
 	for {
 		record, err := r.Read()
@@ -82,17 +87,16 @@ func main() {
 			go commitBuffer(buffer, conn, &wg)
 			break
 		}
-		if len(buffer) < 19 {
+		if len(buffer) < 10000 {
 			buffer = append(buffer, record)
 		} else {
 			wg.Add(1)
 			buffer = append(buffer, record)
-			tmp := make([][]string, 10000)
-			copy(tmp, buffer)
-			go commitBuffer(tmp, conn, &wg)
+			go commitBuffer(buffer, conn, &wg)
 			buffer = nil
 		}
 	}
+
 	wg.Wait()
 
 	q := `INSERT INTO limit_counters (action, campaignid, couponid, counter, limitval)
