@@ -1,10 +1,5 @@
 package main
 
-// TODO:
-// - stream the file instead of loading it on memory
-// 		-  https://golang.org/pkg/bytes/#Buffer.Bytes
-// 		-  https://golang.org/pkg/bufio/#Scanner.Buffer
-
 import (
 	"database/sql"
 	"encoding/csv"
