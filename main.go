@@ -57,7 +57,7 @@ func commitBuffer(buffer [][]string, conn *sql.DB, wg *sync.WaitGroup) {
 
 func main() {
 	var wg sync.WaitGroup
-	file, err := os.Open("production.csv")
+	file, err := os.Open("randomized.csv")
 	if err != nil {
 		log.Panic(err)
 	}
