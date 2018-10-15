@@ -62,7 +62,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	conn, err := sql.Open("postgres", "user=alextalon dbname=vuclip host=localhost port=5432 sslmode=disable")
+	conn, err := sql.Open("postgres", "user=testxxx dbname=testxxx host=localhost port=5432 sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
