@@ -5,3 +5,9 @@ Ever found yourself in the case you need to insert millions of records on a Post
 ### Extra Sauce
 
 run the ruby script to generate some datasets.
+
+### TODO's
+
+- [ ] Extract concerns into its own packages
+- [ ] Make the package overall mode generic and usable
+- [ ] Define clear abstractions and concerns
